@@ -1,6 +1,6 @@
 const BlockChain = require('../BlockChain');
 const Block = require('../Block');
-
+const cryptoHash = require('../cryptoHash');
 describe('Blockchain', () => {
     let blockchain, newChain, originalChain;
 
@@ -32,7 +32,7 @@ describe('Blockchain', () => {
                 expect(BlockChain.isValidChain(blockchain.chain)).toBe(false);
             })
         })
-        describe('whn the chain starts with the genesis block and has multiple blocks ', ()=> {
+        describe('when the chain starts with the genesis block and has multiple blocks ', ()=> {
             beforeEach(() => {
                 blockchain.addBlock({data:'Bears'})
                 blockchain.addBlock({data:'Beets'})
@@ -50,6 +50,30 @@ describe('Blockchain', () => {
 
                     blockchain.chain[2].data = 'some-bad-data';
                     expect(BlockChain.isValidChain(blockchain.chain)).toBe(false);
+                })
+            })
+            describe('and the chain contains a block with a jumped defficulty', () => {
+                it('returns false', () => {
+                    const lastBlock = blockchain.chain[blockchain.chain.length-1];
+                    const lastHash = lastBlock.hash;
+                    const timestamp = Date.now();
+                    const nonce = 0;
+                    const data = [];
+                    const difficulty = lastBlock.difficulty-3;
+
+                    const hash = cryptoHash(timestamp,lastHash,difficulty,nonce,data);
+
+                    const badBlock = new Block({
+                        timestamp,
+                        lastHash,
+                        hash,
+                        nonce,
+                        difficulty,
+                        data
+                    })
+
+                    blockchain.chain.push(badBlock);
+                    expect(BlockChain.isValidChain(blockchain.chain)).toBe(false)
                 })
             })
             describe('and the chain does not contains any invalid blocks', () => {
