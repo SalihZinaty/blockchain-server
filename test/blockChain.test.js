@@ -61,21 +61,53 @@ describe('Blockchain', () => {
         })
     })
     describe('replaceChain()', () => {
+        let errorMoc, logMoc;
+        beforeEach(()=> {
+           errorMoc = jest.fn();
+           logMoc = jest.fn();
+           global.console.error = errorMoc;
+           global.console.log = logMoc;
+        })
         describe('when the new chain is not longer', () => {
-            it('does not replace the chain', () => {
-                chain.chain[0] = {new: 'chain'};
+            beforeEach(() => {
+                newChain.chain[0] = {new: 'chain'};
 
                 blockchain.replaceChain(newChain.chain);
+            })
+            
+            it('does not replace the chain', () => {
+                newChain.chain[0] = {new: 'chain'};
+
+                blockchain.replaceChain(newChain.chain);
+                
                 expect(blockchain.chain).toEqual(originalChain);
             })
+            it('logs an error', () => {
+                expect(errorMoc).toHaveBeenCalled();
+            })
         })
-        describe('when the chain is longer', ()=> {
+        describe('when the new chain is longer', ()=> {
+            beforeEach(() => {
+                newChain.addBlock({data:'Bears'})
+                newChain.addBlock({data:'Beets'})
+                newChain.addBlock({data:'Battlestar'})
+            })
             describe('and the chain is invalid', () => {
-                it('does not replace the chain')
+                beforeEach(() => {
+                    newChain.chain[2].hash = 'some-fake-hash';
+
+                    blockchain.replaceChain(newChain.chain);
+                })
+                it('does not replace the chain',()=> {
+                    expect(blockchain.chain).toEqual(originalChain);
+                })
             })
             describe('and the chain is valid', () => {
+                beforeEach(() => {
+                    blockchain.replaceChain(newChain.chain);
+                })
                 it('replaces the chain', () => {
-
+                    expect(blockchain.chain).toEqual(newChain.chain);
                 })
             })
         })
